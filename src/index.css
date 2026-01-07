@@ -1,0 +1,78 @@
+:root {
+  /* Class Colors */
+  --color-class-1a: #000000;
+  --color-class-1b: #0055ff; /* Bright Blue */
+  --color-class-1c: #ff0000; /* Bright Red */
+  --color-class-1d: #ff9900; /* Orange */
+
+  /* Sport Colors */
+  --color-sport-basketbal: #3b82f6;
+  --color-sport-volleybal: #f97316;
+  --color-sport-floorball: #22c55e;
+  
+  /* Theme Colors */
+  --bg-dark: #0f172a; /* Slate 900 - Rich dark background */
+  --bg-card: #1e293b; /* Slate 800 - Slightly lighter for cards */
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --accent: #ffff00; /* A popping accent color for highlights */
+
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: var(--text-primary);
+  background-color: var(--bg-dark);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1, h2, h3 {
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: var(--bg-card);
+  cursor: pointer;
+  transition: border-color 0.25s, transform 0.1s;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+button:active {
+    transform: scale(0.98);
+}
