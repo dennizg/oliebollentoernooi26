@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { INITIAL_MATCHES, TEAMS, CLASSES, SPORTS } from '../data/mockData';
+import { supabase } from '../supabaseClient';
 
 const TournamentContext = createContext();
 
@@ -7,41 +8,100 @@ export const useTournament = () => useContext(TournamentContext);
 
 export const TournamentProvider = ({ children }) => {
     // State
-    const [matches, setMatches] = useState(() => {
-        const saved = localStorage.getItem('oliebol_matches');
-        return saved ? JSON.parse(saved) : INITIAL_MATCHES;
-    });
+    const [matches, setMatches] = useState([]);
 
-    // Save to local storage on change
+    // Fetch initial data & Realtime subscription
     useEffect(() => {
-        localStorage.setItem('oliebol_matches', JSON.stringify(matches));
-    }, [matches]);
+        const fetchMatches = async () => {
+            const { data, error } = await supabase
+                .from('matches')
+                .select('*')
+                .order('time', { ascending: true }); // Ensure sort consistency? Matches has time string.
 
-    // Sync across tabs (e.g. Admin on laptop screen, Dashboard on beamer)
-    useEffect(() => {
-        const handleStorageChange = (e) => {
-            if (e.key === 'oliebol_matches' && e.newValue) {
-                setMatches(JSON.parse(e.newValue));
+            if (error) {
+                console.error('Error fetching matches:', error);
+                return;
+            }
+
+            // Seed DB if empty
+            if (data.length === 0) {
+                console.log('Database empty, seeding...');
+                const { error: insertError } = await supabase
+                    .from('matches')
+                    .insert(INITIAL_MATCHES);
+
+                if (insertError) console.error('Error seeding data:', insertError);
+                else setMatches(INITIAL_MATCHES);
+            } else {
+                setMatches(data);
             }
         };
-        window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
+
+        fetchMatches();
+
+        // Subscribe to changes
+        const channel = supabase
+            .channel('public:matches')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, (payload) => {
+                // Determine action
+                if (payload.eventType === 'UPDATE') {
+                    setMatches(prev => prev.map(m => m.id === payload.new.id ? payload.new : m));
+                } else if (payload.eventType === 'INSERT') {
+                    setMatches(prev => [...prev, payload.new]);
+                } else if (payload.eventType === 'DELETE') {
+                    // For reset usually
+                    setMatches(prev => prev.filter(m => m.id !== payload.old.id));
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, []);
 
     // Actions
-    const updateScore = (matchId, score1, score2) => {
-        setMatches(prev => prev.map(match => {
-            if (match.id === matchId) {
-                const isFinished = score1 !== '' && score2 !== '' && score1 !== null && score2 !== null;
-                return { ...match, score1, score2, status: isFinished ? 'finished' : 'scheduled' };
-            }
-            return match;
-        }));
+    const updateScore = async (matchId, score1, score2) => {
+        // Optimistic update (optional, but good for UI responsiveness)? 
+        // We let the subscription handle it to ensure true sync, 
+        // BUT for the admin user, immediate feedback is nice.
+        // Let's rely on subscription for simplicity and truth.
+
+        const isFinished = score1 !== '' && score2 !== '' && score1 !== null && score2 !== null;
+        const status = isFinished ? 'finished' : 'scheduled';
+
+        const { error } = await supabase
+            .from('matches')
+            .update({ score1, score2, status })
+            .eq('id', matchId);
+
+        if (error) console.error('Error updating score:', error);
     };
 
-    const resetTournament = () => {
-        setMatches(INITIAL_MATCHES);
-        localStorage.removeItem('oliebol_matches');
+    const resetTournament = async () => {
+        // 1. Delete all matches (finals included)
+        // 2. Re-insert initial matches
+        // Note: DELETE without WHERE is blocked by default in Supabase clients? 
+        // Usually need to allow it or iterate. IDK. 
+        // Or "delete where id is not null".
+
+        // Let's try simple delete all
+        const { error: deleteError } = await supabase
+            .from('matches')
+            .delete()
+            .neq('id', 'placeholder_impossible_id'); // Delete everything usually requires filter
+
+        if (deleteError) {
+            console.error('Error resetting:', deleteError);
+            return;
+        }
+
+        // Re-seed
+        const { error: seedError } = await supabase
+            .from('matches')
+            .insert(INITIAL_MATCHES);
+
+        if (seedError) console.error('Error restarting:', seedError);
     };
 
     // Calculations
@@ -167,13 +227,12 @@ export const TournamentProvider = ({ children }) => {
         return { teamStandings, classStats };
     }, [matches]);
 
-    const generateFinals = () => {
-        // Check if finals already exist to prevent duplicates?
-        // Simple check: if any match has 'type' === 'final'
+    const generateFinals = async () => {
+        // Check if finals already exist
         if (matches.some(m => m.type === 'final')) {
             if (!confirm('Finales lijken al gegenereerd. Wil je ze opnieuw genereren? (Bestaande scores in finales gaan verloren)')) return;
             // Remove old finals
-            setMatches(prev => prev.filter(m => m.type !== 'final'));
+            await supabase.from('matches').delete().eq('type', 'final');
         }
 
         const newMatches = [];
@@ -242,7 +301,8 @@ export const TournamentProvider = ({ children }) => {
         });
 
         if (newMatches.length > 0) {
-            setMatches(prev => [...prev.filter(m => m.type !== 'final'), ...newMatches]);
+            const { error } = await supabase.from('matches').insert(newMatches);
+            if (error) console.error("Error generating finals:", error);
         } else {
             alert('Niet genoeg data om finales te genereren.');
         }
