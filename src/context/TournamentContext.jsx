@@ -227,18 +227,33 @@ export const TournamentProvider = ({ children }) => {
         return { teamStandings, classStats };
     }, [matches]);
 
-    const generateFinals = async () => {
-        // Check if finals already exist
-        if (matches.some(m => m.type === 'final')) {
-            if (!confirm('Finales lijken al gegenereerd. Wil je ze opnieuw genereren? (Bestaande scores in finales gaan verloren)')) return;
-            // Remove old finals
-            await supabase.from('matches').delete().eq('type', 'final');
+    const generateFinals = async (sportId = null) => {
+        // Determine which sports to process
+        const sportsToProcess = sportId ? SPORTS.filter(s => s.id === sportId) : SPORTS;
+        const sportIds = sportsToProcess.map(s => s.id);
+
+        // Check if finals already exist for these sports
+        const existingFinals = matches.filter(m => m.type === 'final' && sportIds.includes(m.sport));
+
+        if (existingFinals.length > 0) {
+            const msg = sportId
+                ? `Finales voor ${sportId} lijken al te bestaan.`
+                : 'Er bestaan al finales.';
+
+            if (!confirm(`${msg} Wil je ze opnieuw genereren? (Bestaande scores in DEZE finales gaan verloren)`)) return;
+
+            // Remove old finals for these sports ONLY
+            await supabase
+                .from('matches')
+                .delete()
+                .eq('type', 'final')
+                .in('sport', sportIds);
         }
 
         const newMatches = [];
         const { teamStandings } = standings; // Accessing the memoized standings
 
-        SPORTS.forEach(sport => {
+        sportsToProcess.forEach(sport => {
             // Get teams for this sport
             const sportTeams = teamStandings.filter(t => t.sport === sport.id);
             // Sort by points, then goalDiff, then goalsFor

@@ -56,12 +56,23 @@ const Admin = () => {
         <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <h1>Wedstrijdbeheer</h1>
-                <button
-                    onClick={() => generateFinals()}
-                    style={{ backgroundColor: 'var(--color-sport-basketbal)', color: 'white' }}
-                >
-                    🏆 Genereer Finales
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    {SPORTS.map(sport => (
+                        <button
+                            key={sport.id}
+                            onClick={() => generateFinals(sport.id)}
+                            style={{
+                                backgroundColor: sport.color,
+                                color: 'white',
+                                fontSize: '0.8rem',
+                                padding: '0.5rem'
+                            }}
+                            title={`Genereer finales voor ${sport.name}`}
+                        >
+                            🏆 {sport.name}
+                        </button>
+                    ))}
+                </div>
                 <button
                     onClick={() => { if (window.confirm('Weet je zeker dat je ALLES wilt resetten?')) resetTournament(); }}
                     style={{ backgroundColor: 'red', color: 'white' }}
