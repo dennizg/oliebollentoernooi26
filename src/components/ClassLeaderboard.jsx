@@ -6,28 +6,14 @@ const ClassLeaderboard = ({ classStats }) => {
 
     return (
         <div className="leaderboard-container">
-            <h2 style={{
-                fontSize: '2.5rem',
-                marginBottom: '1.5rem',
-                background: 'linear-gradient(90deg, #fff, #aaa)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent'
-            }}>
+            <h2 className="class-board-title">
                 Klassement
             </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                 {classStats.map((cls, index) => (
                     <div key={cls.id} style={{ position: 'relative' }}>
                         {/* Bar Container */}
-                        <div style={{
-                            background: 'rgba(255,255,255,0.05)',
-                            borderRadius: '12px',
-                            overflow: 'hidden',
-                            height: '80px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            position: 'relative'
-                        }}>
+                        <div className="class-bar">
                             {/* Filling Bar */}
                             <div style={{
                                 width: `${(cls.points / maxPoints) * 100}%`,
@@ -48,16 +34,16 @@ const ClassLeaderboard = ({ classStats }) => {
                                 display: 'flex',
                                 justifyContent: 'space-between',
                                 width: '100%',
-                                padding: '0 2rem',
+                                padding: '0 1.5rem',
                                 color: '#fff',
                                 textShadow: '0 2px 4px rgba(0,0,0,0.5)',
                                 alignItems: 'center'
                             }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                    <span style={{ fontSize: '2rem', fontWeight: 'bold', width: '40px' }}>#{index + 1}</span>
-                                    <span style={{ fontSize: '2.5rem', fontWeight: '800', textTransform: 'uppercase' }}>{cls.name}</span>
+                                    <span className="class-bar-rank">#{index + 1}</span>
+                                    <span className="class-bar-name">{cls.name}</span>
                                 </div>
-                                <span style={{ fontSize: '3rem', fontWeight: '900' }}>{cls.points}</span>
+                                <span className="class-bar-points">{cls.points}</span>
                             </div>
                         </div>
                     </div>
