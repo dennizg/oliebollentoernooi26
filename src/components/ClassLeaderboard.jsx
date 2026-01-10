@@ -9,9 +9,13 @@ const ClassLeaderboard = ({ classStats }) => {
             <h2 className="class-board-title">
                 Klassement
             </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+            <div className="class-list">
                 {classStats.map((cls, index) => (
-                    <div key={cls.id} style={{ position: 'relative' }}>
+                    <div
+                        key={cls.id}
+                        className="class-item"
+                        style={{ '--index': index }}
+                    >
                         {/* Bar Container */}
                         <div className="class-bar">
                             {/* Filling Bar */}

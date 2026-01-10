@@ -160,16 +160,42 @@ button:active {
 }
 
 /* --- CLASS LEADERBOARD --- */
+.leaderboard-container {
+  --card-height: 80px;
+  --card-gap: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
 .class-board-title {
   font-size: 2.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
   background: linear-gradient(90deg, #fff, #aaa);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
+.class-list {
+  position: relative;
+  /* Height calculation to ensure container takes up space */
+  height: calc(4 * (var(--card-height) + var(--card-gap)));
+}
+
+.class-item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--card-height);
+  /* Calculate position based on index */
+  transform: translateY(calc(var(--index) * (var(--card-height) + var(--card-gap))));
+  transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Bouncy spring effect */
+  will-change: transform;
+}
+
 .class-bar {
-  height: 80px;
+  height: 100%;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -196,16 +222,18 @@ button:active {
 }
 
 @media (max-width: 768px) {
+  .leaderboard-container {
+    --card-height: 50px;
+    --card-gap: 0.8rem;
+  }
+
   .class-board-title {
     font-size: 1.5rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem;
     text-align: center;
   }
 
-  .class-bar {
-    height: 50px;
-    /* More compact */
-  }
+  /* .class-bar height inherited from item */
 
   .class-bar-rank {
     font-size: 1.2rem;
